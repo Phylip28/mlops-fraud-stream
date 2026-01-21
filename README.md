@@ -57,3 +57,6 @@ Este proyecto sigue estrictamente la **Arquitectura Hexagonal**.
 - **`src/domain`**: No tiene dependencias externas.
 - **`src/adapters`**: Contiene las implementaciones de Redis, River, Kafka, etc.
 - **`src/entrypoints`**: Contiene la API y los CLI.
+
+# 💥 Enlace de Gemini usado 💥
+https://gemini.google.com/share/0e251630c6dc
