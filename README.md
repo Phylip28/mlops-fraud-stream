@@ -157,8 +157,18 @@ Esta FASE 1 incluye:
 
 ## 📄 Licencia
 
-[Especificar licencia]
+## 📊 Dataset: PaySim
 
-## 👥 Autores
+<div align="center">
 
-[Especificar autores]
+**Fuente:** [Kaggle - PaySim Mobile Money Simulator](https://www.kaggle.com/datasets/ealaxi/paysim1)
+
+| Característica | Valor |
+|:--------------:|:-----:|
+| **📦 Tamaño** | 200,003 transacciones |
+| **⏱️ Período** | 30 días (720 horas) |
+| **📋 Variables** | 11 columnas originales |
+| **🎯 Target** | `isFraud` (0/1) |
+| **💳 Tipos** | TRANSFER, CASH_OUT, PAYMENT, DEBIT, CASH_IN |
+
+</div>
