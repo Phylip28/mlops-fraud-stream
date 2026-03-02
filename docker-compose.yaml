@@ -1,0 +1,19 @@
+services:
+  redpanda:
+    image: redpandadata/redpanda:latest
+    container_name: redpanda_broker
+    ports:
+      - 9092:9092
+    command:
+      - redpanda
+      - start
+
+  redpanda_console:
+    image: redpandadata/console:latest
+    container_name: redpanda_console
+    ports:
+      - 8080:8080
+    environment:
+      - KAFKA_BROKERS=redpanda:9092
+    depends_on:
+      - redpanda
