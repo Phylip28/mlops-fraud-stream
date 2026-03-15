@@ -1,23 +1,97 @@
 [
     {
         "model_name": "Logistic_Regression",
-        "accuracy": 0.5081,
-        "precision": 0.009267274301135496,
-        "recall": 0.4538653366583541,
-        "f1_score": 0.01816367265469062
+        "accuracy": 0.50965,
+        "precision": 0.00525135107576221,
+        "recall": 0.5,
+        "f1_score": 0.010393541876892029,
+        "train_time_sec": 0.6096363067626953,
+        "infer_time_sec": 0.0020067691802978516,
+        "confusion_matrix": [
+            [
+                20283,
+                19511
+            ],
+            [
+                103,
+                103
+            ]
+        ]
     },
     {
         "model_name": "Random_Forest",
-        "accuracy": 0.8487,
-        "precision": 0.010735930735930736,
-        "recall": 0.1546134663341646,
-        "f1_score": 0.020077720207253884
+        "accuracy": 0.9244,
+        "precision": 0.0038732394366197184,
+        "recall": 0.05339805825242718,
+        "f1_score": 0.007222586999343401,
+        "train_time_sec": 17.329906702041626,
+        "infer_time_sec": 0.3141343593597412,
+        "confusion_matrix": [
+            [
+                36965,
+                2829
+            ],
+            [
+                195,
+                11
+            ]
+        ]
     },
     {
         "model_name": "XGBoost",
-        "accuracy": 0.686275,
-        "precision": 0.010398194422053844,
-        "recall": 0.32169576059850374,
-        "f1_score": 0.020145233075661746
+        "accuracy": 0.75355,
+        "precision": 0.004924086992203529,
+        "recall": 0.23300970873786409,
+        "f1_score": 0.009644364074743821,
+        "train_time_sec": 1.1594693660736084,
+        "infer_time_sec": 0.025018692016601562,
+        "confusion_matrix": [
+            [
+                30094,
+                9700
+            ],
+            [
+                158,
+                48
+            ]
+        ]
+    },
+    {
+        "model_name": "LightGBM",
+        "accuracy": 0.657325,
+        "precision": 0.004841194161226436,
+        "recall": 0.32038834951456313,
+        "f1_score": 0.009538261435074788,
+        "train_time_sec": 0.5592596530914307,
+        "infer_time_sec": 0.03746747970581055,
+        "confusion_matrix": [
+            [
+                26227,
+                13567
+            ],
+            [
+                140,
+                66
+            ]
+        ]
+    },
+    {
+        "model_name": "CatBoost",
+        "accuracy": 0.77235,
+        "precision": 0.005225706026239715,
+        "recall": 0.22815533980582525,
+        "f1_score": 0.010217391304347826,
+        "train_time_sec": 34.46102499961853,
+        "infer_time_sec": 0.02581954002380371,
+        "confusion_matrix": [
+            [
+                30847,
+                8947
+            ],
+            [
+                159,
+                47
+            ]
+        ]
     }
 ]

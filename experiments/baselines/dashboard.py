@@ -3,111 +3,113 @@ import pandas as pd
 import json
 import os
 import plotly.express as px
+import plotly.graph_objects as go
 
-# Configuración de página
-st.set_page_config(
-    page_title="Model Experiments Dashboard",
-    page_icon="🤖",
-    layout="wide"
-)
+st.set_page_config(page_title="Suite de Benchmarks Fase 0", layout="wide")
 
-# Estilos CSS
-st.markdown("""
-<style>
-    .reportview-container {
-        margin-top: -2em;
-    }
-    .stMetric-value {
-        font-size: 20px !important;
-    }
-</style>
-""", unsafe_allow_html=True)
+st.title("🛡️ Suite de Detección de Fraude - Fase 0 (Baselines)")
+st.markdown("Comparativa de modelos Batch con estrategia de mitigación de desbalanceo (SMOTE).")
 
-# Título y Descripción
-st.title("🎯 Baseline Models Dashboard")
-st.markdown("Monitorización de la Fase 0: **Comparativa de Modelos Batch** en la Detección de Fraude.")
-
-# Función para cargar métricas
-@st.cache_data(ttl=1)  # Recarga cada segundo si cambia
-def load_metrics(filepath):
-    if not os.path.exists(filepath):
+@st.cache_data(ttl=2)
+def cargar_datos():
+    if not os.path.exists("metrics.json"):
         return None
-    with open(filepath, 'r') as f:
-        metrics = json.load(f)
-    return pd.DataFrame(metrics)
+    with open("metrics.json", "r") as f:
+        return pd.DataFrame(json.load(f))
 
-# Ruta del archivo (asume que se ejecuta desde experiments/baselines/)
-METRICS_FILE = "metrics.json"
+df = cargar_datos()
 
-df_metrics = load_metrics(METRICS_FILE)
-
-if df_metrics is None:
-    st.warning(f"No se encontró el archivo `{METRICS_FILE}`. Ejecuta primero `python steps.py`.")
+if df is None:
+    st.error("Archivo `metrics.json` no encontrado. Ejecuta `python steps.py` primero.")
 else:
-    st.subheader("📊 Tabla Comparativa de Rendimiento")
+    # 1. KPIs Generales
+    mejores_modelos = df.sort_values(by="f1_score", ascending=False).iloc[0]
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Modelo Top (F1)", mejores_modelos['model_name'])
+    col2.metric("Mejor Recall", df.loc[df['recall'].idxmax()]['model_name'])
+    col3.metric("Entrenamiento más rápido", df.loc[df['train_time_sec'].idxmin()]['model_name'])
+    col4.metric("Inferencia más rápida", df.loc[df['infer_time_sec'].idxmin()]['model_name'])
+    
+    st.divider()
 
-    # Resaltar en la tabla
+    # 2. Tabla Comparativa
+    st.subheader("📑 Resultados Analíticos Consolidado")
+    
+    # Formateo de la tabla de display
+    df_display = df.drop(columns=['confusion_matrix']).copy()
+    
     st.dataframe(
-        df_metrics.style.highlight_max(subset=['f1_score', 'recall', 'precision', 'accuracy'], 
-                                       color='lightgreen', axis=0),
+        df_display.style.highlight_max(subset=['accuracy', 'precision', 'recall', 'f1_score'], color='#004d00', axis=0) \
+                        .highlight_min(subset=['train_time_sec', 'infer_time_sec'], color='#004d00', axis=0) \
+                        .format({col: "{:.4f}" for col in df_display.columns if col != 'model_name'}),
         use_container_width=True
     )
 
-    st.markdown("---")
-
-    # Gráficos
-    st.subheader("📈 Análisis Visual")
+    st.divider()
     
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("**F1-Score por Modelo (Equilibrio Precision/Recall)**")
-        fig_f1 = px.bar(
-            df_metrics, 
-            x='model_name', 
-            y='f1_score',
-            labels={'model_name': 'Algoritmo', 'f1_score': 'F1 Score'},
-            color='model_name',
-            text_auto='.3f'
-        )
-        fig_f1.update_layout(showlegend=False)
-        st.plotly_chart(fig_f1, use_container_width=True)
-
-    with col2:
-        st.markdown("**Recall por Modelo (Capacidad de detectar Fraude real)**")
-        fig_recall = px.bar(
-            df_metrics, 
-            x='model_name', 
-            y='recall',
-            labels={'model_name': 'Algoritmo', 'recall': 'Recall (Sensibilidad)'},
-            color='model_name',
-            color_discrete_sequence=px.colors.qualitative.Pastel,
-            text_auto='.3f'
-        )
-        fig_recall.update_layout(showlegend=False)
-        st.plotly_chart(fig_recall, use_container_width=True)
-
-    st.markdown("---")
+    # 3. Gráficas Lado a Lado
+    st.subheader("📊 Comparativa de Rendimiento y Latencia")
     
-    # Análisis Insights
-    st.subheader("💡 Insights Generados")
-    best_f1_idx = df_metrics['f1_score'].idxmax()
-    best_recall_idx = df_metrics['recall'].idxmax()
+    tab1, tab2 = st.tabs(["Métricas de Clasificación", "Latencias de Cómputo"])
     
-    best_f1_model = df_metrics.loc[best_f1_idx, 'model_name']
-    best_recall_model = df_metrics.loc[best_recall_idx, 'model_name']
-    
-    st.info(f"""
-    - **Mejor modelo en F1-Score (Equilibrio general):** `{best_f1_model}` ({df_metrics['f1_score'].max():.3f})
-    - **Mejor modelo en Recall (Menos falsos negativos):** `{best_recall_model}` ({df_metrics['recall'].max():.3f})
-    
-    *En detección de fraude, suele priorizarse un alto **Recall** (capturar el mayor fraude posible), siempre y cuando la **Precision** no decaiga excesivamente.*
-    """)
+    with tab1:
+        c1, c2 = st.columns(2)
+        with c1:
+            fig_f1 = px.bar(df, x="model_name", y="f1_score", color="model_name", 
+                            title="F1-Score (Trade-off Precision/Recall)", text_auto=".3f")
+            fig_f1.update_layout(showlegend=False)
+            st.plotly_chart(fig_f1, use_container_width=True)
+            
+        with c2:
+            fig_rec = px.bar(df, x="model_name", y="recall", color="model_name",
+                             title="Recall (Captura Total de Fraudes)", text_auto=".3f")
+            fig_rec.update_layout(showlegend=False)
+            st.plotly_chart(fig_rec, use_container_width=True)
+            
+    with tab2:
+        c3, c4 = st.columns(2)
+        with c3:
+            fig_train = px.bar(df, x="model_name", y="train_time_sec", color="model_name",
+                               title="Tiempo de Entrenamiento (Segundos)", text_auto=".2f")
+            fig_train.update_layout(showlegend=False)
+            st.plotly_chart(fig_train, use_container_width=True)
+            
+        with c4:
+            fig_inf = px.bar(df, x="model_name", y="infer_time_sec", color="model_name",
+                              title="Latencia de Inferencia por Lote (Segundos)", text_auto=".4f")
+            fig_inf.update_layout(showlegend=False)
+            st.plotly_chart(fig_inf, use_container_width=True)
 
-    st.sidebar.header("Información")
-    st.sidebar.info(
-        "Este dashboard lee automáticamente el archivo `metrics.json` generado por el orquestador `steps.py`."
-    )
-    if st.sidebar.button("↻ Actualizar Datos"):
-        st.rerun()
+    st.divider()
+
+    # 4. Matrices de Confusión Dinámicas
+    st.subheader("📉 Análisis de Matrices de Confusión")
+    
+    modelo_seleccionado = st.selectbox("Selecciona un modelo para ver su Matriz de Confusión", df['model_name'])
+    
+    cm = df[df['model_name'] == modelo_seleccionado]['confusion_matrix'].values[0]
+    
+    fig_cm = go.Figure(data=go.Heatmap(
+        z=cm,
+        x=['Predic. No Fraude', 'Predic. Fraude'],
+        y=['Real No Fraude', 'Real Fraude'],
+        hoverongaps=False,
+        colorscale='Blues',
+        text=[[str(val) for val in row] for row in cm],
+        texttemplate="%{text}",
+        textfont={"size": 20}
+    ))
+    fig_cm.update_layout(width=500, height=500)
+    
+    col_cm1, col_cm2 = st.columns([1, 2])
+    with col_cm1:
+        st.plotly_chart(fig_cm, use_container_width=True)
+    with col_cm2:
+         st.markdown(f"**Insights del modelo {modelo_seleccionado}:**")
+         st.markdown(f"- **Verdaderos Negativos (TN):** {cm[0][0]} -> Operaciones sanas permitidas.")
+         st.markdown(f"- **Falsos Positivos (FP):** {cm[0][1]} -> Fricción con cliente (Bloqueaste a un inocente).")
+         st.markdown(f"- **Falsos Negativos (FN):** {cm[1][0]} -> **PERDIDA DE DINERO** (Fraude ignorado).")
+         st.markdown(f"- **Verdaderos Positivos (TP):** {cm[1][1]} -> Fraude bloqueado con éxito.")
+         
+         st.info("💡 En detección de fraude bancario, en Fase Batch buscamos minimizar los **FN** mientras mantenemos los **FP** dentro del umbral tolerado por Riesgos.")
 
