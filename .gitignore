@@ -2,6 +2,7 @@
 env/
 venv/
 .env/
+.venv/
 
 # === DATOS GRANDES Y MODELOS ===
 # Evitar que se suban datasets pesados
