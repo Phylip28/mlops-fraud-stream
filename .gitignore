@@ -43,3 +43,6 @@ experiments/baselines/drift_alert.json
 
 # Linters
 .ruff_cache/
+
+# Static type checkers
+.mypy_cache/
