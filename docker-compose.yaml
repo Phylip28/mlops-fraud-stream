@@ -36,11 +36,11 @@ services:
       retries: 5
   
   ml_flow:
-    image: ghcr.io/mlflow/mlflow:v2.11.1
+    image: ghcr.io/mlflow/mlflow:v3.10.1
     container_name: mlops_mlflow
     entrypoint: >
       sh -c "
-      pip install psycopg2-binary &&
+      pip install psycopg2-binary boto3 &&
       mlflow server 
       --backend-store-uri postgresql://mlflow_user:mlflow_password@postgres:5432/mlflow_db 
       --default-artifact-root s3://mlflow-artifacts 
