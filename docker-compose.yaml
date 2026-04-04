@@ -1,19 +1,63 @@
 services:
-  redpanda:
-    image: redpandadata/redpanda:latest
-    container_name: redpanda_broker
-    ports:
-      - 9092:9092
-    command:
-      - redpanda
-      - start
-
-  redpanda_console:
-    image: redpandadata/console:latest
-    container_name: redpanda_console
-    ports:
-      - 8080:8080
+  
+  postgres:
+    image: postgres:15-alpine
+    container_name: mlops_postgres
     environment:
-      - KAFKA_BROKERS=redpanda:9092
+      POSTGRES_USER: mlflow_user
+      POSTGRES_PASSWORD: mlflow_password
+      POSTGRES_DB: mlflow_db
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mlflow_user -d mlflow_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: mlops_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio_user
+      MINIO_ROOT_PASSWORD: minio_password
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  ml_flow:
+    image: ghcr.io/mlflow/mlflow:v2.11.1
+    container_name: mlops_mlflow
+    entrypoint: >
+      sh -c "
+      pip install psycopg2-binary &&
+      mlflow server 
+      --backend-store-uri postgresql://mlflow_user:mlflow_password@postgres:5432/mlflow_db 
+      --default-artifact-root s3://mlflow-artifacts 
+      --host 0.0.0.0 
+      --port 5000"
+    environment:
+      AWS_ACCESS_KEY_ID: minio_admin
+      AWS_SECRET_ACCESS_KEY: minio_password
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+    ports:
+      - "5000:5000"
     depends_on:
-      - redpanda
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  minio_data:
