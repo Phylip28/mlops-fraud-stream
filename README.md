@@ -60,8 +60,8 @@ poetry shell
 │   └── processed/           # Datasets pre-procesados (Ignorados en Git)
 ├── experiments/
 │   └── baselines/           # FASE 0: Baseline Batch Models y Dashboards
-│       ├── data_preprocessing.py   
-│       ├── base_model.py                # Clase base abstracta SOLID 
+│       ├── data_preprocessing.py
+│       ├── base_model.py                # Clase base abstracta SOLID
 │       ├── *_model.py                   # Algoritmos específicos instanciados
 │       ├── steps.py                     # Pipeline de Orquestacion Batch
 │       ├── data_drift_simulation.py     # Drift detector estadistico (MLOps)

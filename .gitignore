@@ -37,7 +37,7 @@ __pycache__/
 .DS_Store
 .vscode/
 
-# Resultados y métricas 
+# Resultados y métricas
 experiments/baselines/metrics.json
 experiments/baselines/drift_alert.json
 
@@ -46,3 +46,6 @@ experiments/baselines/drift_alert.json
 
 # Static type checkers
 .mypy_cache/
+
+# Testing
+.pytest_cache/

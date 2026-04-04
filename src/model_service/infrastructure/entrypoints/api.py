@@ -1,5 +1,7 @@
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 import mlflow
 import pandas as pd
@@ -17,11 +19,11 @@ os.environ["AWS_SECRET_ACCESS_KEY"] = "minio_password"
 mlflow.set_tracking_uri("http://localhost:5000")
 
 # Variable donde vivirá nuestro modelo en memoria
-model_cache = {}
+model_cache: dict[str, Any] = {}
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """
     Ciclo de vida de FastAPI.
     Todo lo que está antes del 'yield' se ejecuta al prender el servidor.

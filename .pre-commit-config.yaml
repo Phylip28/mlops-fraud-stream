@@ -9,7 +9,7 @@ repos:
 
   # Politica de commits
   - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v4.3.0
+    rev: v4.4.0
     hooks:
       - id: conventional-pre-commit
         stages: [commit-msg]      # Se activa despues de escribir el mensaje
@@ -28,3 +28,29 @@ repos:
           "ci",
           "perf"
         ]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.9
+    hooks:
+      # Run the linter.
+      - id: ruff-check
+        types_or: [ python, pyi, jupyter, pyproject ]
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format
+        types_or: [ python, pyi, jupyter ]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.20.0'
+    hooks:
+    -   id: mypy
+        additional_dependencies: [pydantic]
+
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: Run Unit Tests
+        entry: uv run pytest
+        language: system
+        types: [python]
+        pass_filenames: false
