@@ -23,3 +23,21 @@ class PredictionResponseDTO(BaseModel):
     model_version: str = Field(
         ..., description="Versión del modelo que atendió la petición"
     )
+
+
+class TrainRequestDTO(BaseModel):
+    """Objeto para recibir datos de entrenamiento del AutoML."""
+
+    dataset_path: str = Field(
+        ..., description="Ruta f�sica o URI del dataset CSV a procesar"
+    )
+    target_column: str = Field(
+        default="target", description="Nombre de la columna a predecir"
+    )
+    experiment_name: str = Field(
+        default="automl_experiment", description="Nombre del experimento de MLflow"
+    )
+    model_name: str = Field(
+        default="ChampionModel", description="Nombre del modelo a registrar"
+    )
+

@@ -10,7 +10,9 @@ from fastapi import FastAPI, HTTPException
 from model_service.application.dto.prediction_dto import (
     PredictionRequestDTO,
     PredictionResponseDTO,
+    TrainRequestDTO,
 )
+from model_service.application.services.orchestrator import AutoMLOrchestrator
 
 # Usar un .env para producción
 os.environ["MLFLOW_S3_ENDPOINT_URL"] = "http://localhost:9000"
@@ -29,12 +31,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Todo lo que está antes del 'yield' se ejecuta al prender el servidor.
     """
     print("Iniciando API... Conectando con MLflow...")
-    model_name = "GenericModel"
-    model_alias = "latest"  # o una versión específica como "1"
+    model_name = "ChampionModel"
+    model_alias = "champion"
 
     try:
-        # URI mágica de MLflow para descargar modelos registrados
-        model_uri = f"models:/{model_name}/{model_alias}"
+        # URI mÃ¡gica de MLflow para descargar modelos registrados con alias
+        model_uri = f"models:/{model_name}@{model_alias}"
         print(f"Descargando modelo desde: {model_uri}")
 
         # Va a Postgres, averigua dónde está en MinIO, lo descarga y lo carga en memoria
@@ -93,3 +95,38 @@ def predict(request: PredictionRequestDTO) -> PredictionResponseDTO:
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error en inferencia: {str(e)}")
+
+
+@app.post("/train")
+def train_models(request: TrainRequestDTO) -> dict[str, Any]:
+    """Endpoint MLOps: Recibe un dataset, entrena modelos en MLflow y promueve el mejor."""
+    try:
+        if not os.path.exists(request.dataset_path):
+            raise HTTPException(status_code=400, detail=f"Dataset no encontrado en la ruta: {request.dataset_path}")
+            
+        orchestrator = AutoMLOrchestrator(
+            tracking_uri="http://localhost:5000",
+            s3_endpoint="http://localhost:9000"
+        )
+        
+        result = orchestrator.run_automl(
+            dataset_path=request.dataset_path,
+            target_col=request.target_column,
+            experiment_name=request.experiment_name,
+            registered_model_name=request.model_name
+        )
+        
+        # Opcional: Podríamos recargar el modelo en la API dinámicamente luego de entrenar.
+        print("Recargando modelo en caché desde el champion recién promocionado...")
+        model_uri = f"models:/{request.model_name}@champion"
+        loaded_model = mlflow.pyfunc.load_model(model_uri)
+        model_cache["predictor"] = loaded_model
+        model_cache["version"] = result["model_version"]
+                
+        return {"status": "success", "automl_result": result}
+        
+    except ValueError as val_err:
+        raise HTTPException(status_code=400, detail=str(val_err))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error en AutoML orchestrator: {str(e)}")
+
